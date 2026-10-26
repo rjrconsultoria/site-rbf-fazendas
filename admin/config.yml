@@ -1,0 +1,26 @@
+
+backend:
+  name: github
+  repo: jrconsultoria/site-rbf-fazendas
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+locale: "pt"
+
+collections:
+  - name: "fazendas"
+    label: "Fazendas e Grandes Ativos"
+    folder: "content/fazendas"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Nome do imóvel", name: "title", widget: "string" }
+      - { label: "Região", name: "regiao", widget: "string" }
+      - { label: "Preço", name: "preco", widget: "string" }
+      - { label: "Área", name: "area", widget: "string" }
+      - { label: "Descrição", name: "body", widget: "markdown" }
+      - { label: "Fotos", name: "fotos", widget: "list", field: { label: "Foto", name: "foto", widget: "image" } }
