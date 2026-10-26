@@ -27,6 +27,33 @@
 .foot{padding:18px 0;background:#10271f;color:#dbe3dc;font-size:13px}
 @media(max-width:600px){.hero{padding:42px 0}.section{padding:34px 0}.photo{height:180px}}
 </style>
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.photo img').forEach(function (img) {
+    img.style.cursor = 'zoom-in';
+    img.style.transition = 'transform 0.25s ease';
+    img.addEventListener('mouseenter', function () {
+      img.style.transform = 'scale(1.08)';
+    });
+    img.addEventListener('mouseleave', function () {
+      img.style.transform = 'scale(1)';
+    });
+    img.addEventListener('click', function () {
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;padding:20px;';
+      var largeImg = document.createElement('img');
+      largeImg.src = img.src;
+      largeImg.alt = img.alt || 'Foto do imóvel';
+      largeImg.style.cssText = 'max-width:95vw;max-height:90vh;object-fit:contain;border-radius:8px;';
+      overlay.appendChild(largeImg);
+      overlay.addEventListener('click', function () {
+        overlay.remove();
+      });
+      document.body.appendChild(overlay);
+    });
+  });
+});
+</script>
 </head>
 <body>
 <header class="hero">
