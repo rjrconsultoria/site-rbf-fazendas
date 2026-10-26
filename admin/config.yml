@@ -1,7 +1,7 @@
 
 backend:
   name: github
-  repo: jrconsultoria/site-rbf-fazendas
+  repo: rjrconsultoria/site-rbf-fazendas
   branch: main
 
 media_folder: "images"
