@@ -23,4 +23,16 @@ collections:
       - { label: "Preço", name: "preco", widget: "string" }
       - { label: "Área", name: "area", widget: "string" }
       - { label: "Descrição", name: "body", widget: "markdown" }
+      - label: "Categoria"
+        name: "categoria"
+        widget: "select"
+        options:
+          - { label: "Fazendas", value: "Fazendas" }
+          - { label: "Grandes Ativos", value: "Grandes Ativos" }
+          - { label: "Mineração", value: "Mineração" }
+          - { label: "Usinas", value: "Usinas" }
+          - { label: "Documentação e Regularização", value: "Documentação e Regularização" }
+          - { label: "Créditos de Carbono", value: "Créditos de Carbono" }
+          - { label: "Hotéis e Resorts", value: "Hotéis e Resorts" }
+          - { label: "Outros Projetos", value: "Outros Projetos" }
       - { label: "Fotos", name: "fotos", widget: "list", field: { label: "Foto", name: "foto", widget: "image" } }
