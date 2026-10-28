@@ -1,3 +1,4 @@
+```
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -33,6 +34,15 @@
 .btn-compartilhar:hover {
   background: #1da851;
 }
+
+.categorias{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+.categoria-btn{border:1px solid var(--green2);background:#fff;color:var(--green);padding:9px 13px;border-radius:20px;cursor:pointer;font-weight:700}
+.categoria-btn:hover,.categoria-btn.ativo{background:var(--green);color:#fff}
+.photo img{width:100%;height:100%;min-height:0;object-fit:cover;border-radius:8px}
+.photo.galeria{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;height:300px;box-sizing:border-box;overflow:hidden}
+.btn-compartilhar{background:#25D366;color:#fff}
+.btn-compartilhar:hover{background:#1da851}
+
 @media(max-width:600px){.hero{padding:42px 0}.section{padding:34px 0}.photo{height:180px}}
 </style>
   <script>
@@ -90,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
     <h2>Oportunidades em destaque</h2>
     <p class="intro">Conheça algumas oportunidades em nosso radar. Solicite informações, fotos, documentação disponível e condições diretamente com a RBF.</p>
-    <div class="cards">
+    <div class="cards" id="oportunidades">
       <article class="card" data-categoria="Fazendas">
 
 <div class="photo" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;height:300px;box-sizing:border-box;overflow:hidden;">
@@ -188,30 +198,115 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const botoes = document.querySelectorAll('.categoria-btn');
-  const anuncios = document.querySelectorAll('.cards .card');
+  const repoApi = 'https://api.github.com/repos/rjrconsultoria/site-rbf-fazendas/contents/content/fazendas?ref=main';
+  const container = document.getElementById('oportunidades');
+  const botoes = Array.from(document.querySelectorAll('.categoria-btn'));
+
+  function parseAnuncio(markdown) {
+    const match = markdown.match(/^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/);
+    if (!match) return null;
+    const front = match[1];
+    const body = match[2].trim();
+    const data = {};
+    let currentList = '';
+    front.split(/\r?\n/).forEach(function (line) {
+      const field = line.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (field) {
+        currentList = field[1];
+        data[currentList] = field[2].trim().replace(/^['"]|['"]$/g, '');
+        if (currentList === 'fotos' && !data[currentList]) data[currentList] = [];
+      } else if (/^\s+-\s+/.test(line) && currentList === 'fotos') {
+        if (!Array.isArray(data.fotos)) data.fotos = [];
+        data.fotos.push(line.replace(/^\s+-\s+/, '').trim().replace(/^['"]|['"]$/g, ''));
+      }
+    });
+    if (!Array.isArray(data.fotos)) data.fotos = [];
+    data.descricao = body.split(/\r?\n/).map(function (line) {
+      return line.replace(/^\s*[-*]\s+/, '').trim();
+    }).filter(Boolean);
+    return data;
+  }
+
+  function esc(text) {
+    return String(text || '').replace(/[&<>"']/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function makeCard(data) {
+    const title = data.title || 'Oportunidade RBF';
+    const category = data.categoria || 'Outros Projetos';
+    const region = data.regiao || 'Localização sob consulta';
+    const price = data.preco || 'Preço sob consulta';
+    const area = data.area ? '<p><strong>Área:</strong> ' + esc(data.area) + '</p>' : '';
+    const details = data.descricao.length
+      ? '<ul class="details">' + data.descricao.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join('') + '</ul>'
+      : '';
+    const images = data.fotos.filter(Boolean);
+    const photoHtml = images.length
+      ? '<div class="photo galeria">' + images.slice(0, 4).map(function (src, i) {
+          const safeSrc = esc(src);
+          return '<img src="' + safeSrc + '" alt="' + esc(title) + ' - Foto ' + (i + 1) + '" loading="lazy" onerror="this.style.display=\'none\'">';
+        }).join('') + '</div>'
+      : '<div class="photo"><span>Fotos disponíveis sob consulta</span></div>';
+    const inquiry = 'Olá, tenho interesse na oportunidade "' + title + '" (' + region + '). Poderia me enviar mais informações?';
+    const share = 'Confira esta oportunidade da RBF Fazendas & Grandes Ativos: ' + title + ' - ' + window.location.origin + window.location.pathname;
+    return '<article class="card" data-categoria="' + esc(category) + '">' +
+      photoHtml + '<div class="card-content">' +
+      '<div class="tag">' + esc(category) + ' · ' + esc(region) + '</div>' +
+      '<h3>' + esc(title) + '</h3><p class="price">' + esc(price) + '</p>' +
+      area + details +
+      '<p class="small">Informações preliminares, sujeitas à confirmação documental, ambiental e comercial.</p>' +
+      '<a class="btn" href="https://wa.me/5573981354388?text=' + encodeURIComponent(inquiry) + '" target="_blank" rel="noopener">Consultar oportunidade</a> ' +
+      '<a class="btn btn-compartilhar" href="https://api.whatsapp.com/send?text=' + encodeURIComponent(share) + '" target="_blank" rel="noopener">Compartilhar anúncio</a>' +
+      '</div></article>';
+  }
+
+  function aplicarFiltro(categoria) {
+    container.querySelectorAll('.card').forEach(function (card) {
+      card.style.display = categoria === 'Todas' || (card.dataset.categoria || '') === categoria ? '' : 'none';
+    });
+  }
 
   botoes.forEach(function (botao) {
     botao.addEventListener('click', function () {
-      const categoria = botao.dataset.categoria;
-
-      botoes.forEach(function (item) {
-        item.classList.remove('ativo');
-      });
+      botoes.forEach(function (item) { item.classList.remove('ativo'); });
       botao.classList.add('ativo');
-
-      anuncios.forEach(function (anuncio) {
-        const categoriasDoAnuncio = anuncio.dataset.categoria || '';
-        anuncio.style.display =
-          categoria === 'Todas' ||
-          categoriasDoAnuncio === categoria
-            ? ''
-            : 'none';
-      });
+      aplicarFiltro(botao.dataset.categoria || 'Todas');
     });
   });
+
+  fetch(repoApi)
+    .then(function (response) {
+      if (!response.ok) throw new Error('Não foi possível consultar os anúncios do GitHub.');
+      return response.json();
+    })
+    .then(function (files) {
+      const markdownFiles = files.filter(function (file) {
+        return file.type === 'file' && /\.md$/i.test(file.name);
+      });
+      return Promise.all(markdownFiles.map(function (file) {
+        return fetch(file.download_url)
+          .then(function (response) {
+            if (!response.ok) throw new Error('Falha ao ler ' + file.name);
+            return response.text();
+          })
+          .then(parseAnuncio);
+      }));
+    })
+    .then(function (anuncios) {
+      const validos = anuncios.filter(function (item) { return item && item.title; });
+      if (!validos.length) return;
+      container.innerHTML = validos.map(makeCard).join('');
+      const ativo = document.querySelector('.categoria-btn.ativo');
+      aplicarFiltro(ativo ? ativo.dataset.categoria || 'Todas' : 'Todas');
+    })
+    .catch(function (error) {
+      console.warn('A RBF manteve os anúncios já existentes porque não foi possível atualizar a lista automaticamente:', error);
+    });
 });
 </script>
 
 </body>
 </html>
+```
